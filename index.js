@@ -8,7 +8,7 @@ app.set('port', port);
 
 app.use(bodyParser);
 
-const animeController = require('./controllers/AnimeController.js')
+const animeController = require('./controllers/AnimeController.js');
 animeController(app);
 
 
