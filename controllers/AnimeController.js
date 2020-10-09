@@ -20,9 +20,12 @@ module.exports = function(app) {
         });
   });
 
+  /**
+   * url exemple: 'https://www1.animeultima.to/a/kanojo-okarishimasu_120373/episode-4_708644-sub'
+   */
   app.post(PATH + '/ep', bodyParser, (request, response) => {
     const url = request.body.url;
-    //  exemple: url = 'https://www1.animeultima.to/a/kanojo-okarishimasu_120373/episode-4_708644-sub';
+
     AnimeUltimaScrapper.getEpisode(url)
         .then((data) => response.send(data))
         .catch((error) => {
@@ -34,9 +37,12 @@ module.exports = function(app) {
         });
   });
 
+  /**
+   * url exemple: 'https://www1.animeultima.to/a/major-2nd-2nd-season_785390'
+   */
   app.post(PATH + '/anime', bodyParser, (request, response) => {
     const url = request.body.url;
-    //  exemple: url = 'https://www1.animeultima.to/a/major-2nd-2nd-season_785390';
+
     AnimeUltimaScrapper.getAnime(url)
         .then((data) => response.send(data))
         .catch((error) => {
