@@ -1,5 +1,10 @@
 const mysql = require('mysql');
 
+/**
+ * @param {string} name Is a string
+ * @return {string} This returns a slug string
+ * that contains no special chars but '-'
+ */
 exports.slug = function(name) {
   /**
    * First regex replaces special chars with '-'

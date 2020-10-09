@@ -31,11 +31,3 @@ test('should return existing slug', async () => {
       'https://www1.animeultima.to/a/detective-conan_410240/episode-961_650983-sub',
       'Detective Conan Episode 961')).toBe('detective-conan-episode-961');
 });
-
-test('should getting exisitng slugs append slug counter', async () => {
-  expect(await getSlug(
-      'https://www1.animeultima.to/a/detective-conan_410240/episode-961_650983-sub',
-      'Detective Conan Episode 961')).toBe('detective-conan-episode-961');
-});
-
-

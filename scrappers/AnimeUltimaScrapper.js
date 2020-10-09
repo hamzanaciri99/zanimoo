@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
+const {getSlug} = require('../models/slugsDao');
 
 const site = 'https://www1.animeultima.to';
 const paths = {
@@ -13,16 +14,20 @@ const getRecents = function() {
         .then((result) => {
           const $ = cheerio.load(result.data);
           const recentEpisodes = $('.episode-scroller > .card')
-              .map((i, item) => (
-                {
+              .map(async (i, item) => {
+                const episode = {
                   title: $('.episode-title', item).text().trim(),
                   episodeNum: $('.episode-num', item).text(),
                   url: $('a', item).attr('href'),
                   thumbnail: $('img', item).attr('src'),
-                }
-              )).toArray();
-
-          resolve(recentEpisodes);
+                };
+                return {
+                  ...episode,
+                  url: await getSlug(episode.url,
+                      `${episode.title}-${episode.episodeNum}`),
+                };
+              }).toArray();
+          resolve(Promise.all(recentEpisodes));
         })
         .catch((error) => reject(error));
   });
@@ -31,19 +36,27 @@ const getRecents = function() {
 const getEpisode = function(url) {
   return new Promise((resolve, reject) => {
     axios.get(url)
-        .then((result) => {
+        .then(async (result) => {
           const $ = cheerio.load(result.data);
 
           const infoSection = $('.video-content');
+          const title = infoSection.find('div > span').first()
+              .text().split('\n')[0];
           const episodeList = infoSection.find('#episode-list div')
-              .map((i, epDiv) => ({
-                title: $('a', epDiv).text(),
-                url: $('a', epDiv).attr('href'),
-                isNowPlaying: ($(epDiv).attr('id')) ? true : false,
-              })).toArray();
+              .map(async (i, epDiv) => {
+                const ep = {
+                  title: $('a', epDiv).text(),
+                  url: $('a', epDiv).attr('href'),
+                  isNowPlaying: ($(epDiv).attr('id')) ? true : false,
+                };
+                return {
+                  ...ep,
+                  url: await getSlug(ep.url, `${title}-${ep.title}`),
+                };
+              }).toArray();
 
           const episode = {
-            title: infoSection.find('div > span').first().text().split('\n')[0],
+            title,
             num: infoSection.find('div > span').first().text().split('\n')[1]
                 .trim(),
             type: infoSection.find('span > span', infoSection).first().text(),
@@ -52,7 +65,7 @@ const getEpisode = function(url) {
             thumbnail: infoSection.find('.thumbnail').attr('src'),
             details: infoSection.find('.anime-meta .anime-details').text()
                 .trim(),
-            episodeList: episodeList,
+            episodeList: await Promise.all(episodeList),
             players: [{
               name: null,
               iframe: $('.player-container > iframe').attr('src'),
@@ -91,7 +104,7 @@ const getAnime = function(url) {
             return page.content();
           });
         })
-        .then(function(html) {
+        .then(async function(html) {
           const $ = cheerio.load(html);
           const anime = {};
 
@@ -123,11 +136,21 @@ const getAnime = function(url) {
             anime.episodes.push({
               num: $('th', e).text().trim(),
               title: $('td', e).first().text().trim(),
-              url: ($('td', e).first().find('a').length) ? $('td', e).first()
-                  .find('a').attr('href').trim() : null,
+              url: ($('td', e).first().find('a').length) ? $('td', e)
+                  .first().find('a').attr('href').trim() : null,
               airing: $('td', e).last().text().trim(),
             });
           });
+
+          anime.episodes = anime.episodes.map(async (ep) => {
+            if (!ep.url) return ep;
+            return {
+              ...ep,
+              url: await getSlug(ep.url, `${anime.name}-${ep.num}-${ep.title}`),
+            };
+          });
+
+          anime.episodes = await Promise.all(anime.episodes);
 
           resolve(anime);
         })
