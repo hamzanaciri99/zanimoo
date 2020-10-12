@@ -2,11 +2,14 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
 const {getSlug} = require('../models/slugsDao');
+const {getPage} = require('../util');
 
 const site = 'https://www1.animeultima.to';
 const paths = {
   recent: '/',
 };
+
+const NAVIGATION_TIMEOUT = 300000;
 
 const getRecents = function() {
   return new Promise((resolve, reject) => {
@@ -88,16 +91,7 @@ const getEpisode = function(url) {
 
 const getAnime = function(url) {
   return new Promise((resolve, reject) => {
-    puppeteer
-        .launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-          ],
-        })
-        .then(function(browser) {
-          return browser.newPage();
-        })
+    getPage()
         .then(function(page) {
           page.setDefaultNavigationTimeout(300000);
           // wait untill episodes table exists
@@ -251,18 +245,9 @@ const getLastAdded = function() {
 
 const getPlayers = function(url) {
   return new Promise((resolve, reject) => {
-    puppeteer
-        .launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-          ],
-        })
-        .then(function(browser) {
-          return browser.newPage();
-        })
+    getPage()
         .then(function(page) {
-          page.setDefaultNavigationTimeout(300000);
+          page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT);
           return page.goto(url).then(function() {
             return page.content();
           });
@@ -308,18 +293,9 @@ const getPlayers = function(url) {
 
 const getPlayersIFrame = function(url) {
   return new Promise((resolve, reject) => {
-    puppeteer
-        .launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-          ],
-        })
-        .then(function(browser) {
-          return browser.newPage();
-        })
+    getPage()
         .then(function(page) {
-          page.setDefaultNavigationTimeout(300000);
+          page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT);
           return page.goto(url).then(function() {
             return page.content();
           });

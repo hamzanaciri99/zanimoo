@@ -1,4 +1,5 @@
 const mysql = require('mysql');
+const puppeteer = require('puppeteer');
 
 /**
  * @param {string} name Is a string
@@ -14,6 +15,13 @@ exports.slug = function(name) {
   const regexp2 = /-+/g;
 
   return name.trim().replace(regexp1, '-').replace(regexp2, '-').toLowerCase();
+};
+
+const browser = puppeteer.launch({headless: true, args: ['--no-sandbox']});
+exports.getPage = function() {
+  return browser.then(function(browser) {
+    return browser.newPage();
+  });
 };
 
 const connection = mysql.createConnection({
