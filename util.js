@@ -16,11 +16,17 @@ exports.slug = function(name) {
   return name.trim().replace(regexp1, '-').replace(regexp2, '-').toLowerCase();
 };
 
-exports.requireDatabase = function() {
-  return mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'zanimoo',
-  });
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'zanimoo',
+});
+
+exports.getConnection = function() {
+  return connection;
+};
+
+exports.endConnection = function() {
+  if (connection) connection.end();
 };

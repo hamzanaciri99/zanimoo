@@ -1,4 +1,4 @@
-const {getSlugCounter, addUrl, getSlug} = require('./slugsDao');
+const {getSlugCounter, addUrl, getSlug, getUrl} = require('./slugsDao');
 
 test('should get existing slug\'s counter', async () => {
   expect(await getSlugCounter('some-slug')).toBe(2);
@@ -30,4 +30,9 @@ test('should return existing slug', async () => {
   expect(await getSlug(
       'https://www1.animeultima.to/a/detective-conan_410240/episode-961_650983-sub',
       'Detective Conan Episode 961')).toBe('detective-conan-episode-961');
+});
+
+test('should return url corresponding to the provided slug', async () => {
+  expect(await getUrl('major-2nd-2nd-season-extreme-small-ball-8'))
+      .toBe('https://www1.animeultima.to/a/major-2nd-2nd-season_785390/episode-8_854351-sub');
 });

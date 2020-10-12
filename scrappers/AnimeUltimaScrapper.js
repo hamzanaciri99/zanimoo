@@ -72,7 +72,11 @@ const getEpisode = function(url) {
             }],
           };
 
-          if (episode.players[0].iframe.startsWith('/')) {
+          episode.animeUrl = await getSlug(
+              infoSection.find('.anime-box > a').attr('href'), episode.title);
+
+          if (episode.players[0].iframe &&
+            episode.players[0].iframe.startsWith('/')) {
             episode.players[0].iframe = site + episode.players[0].iframe;
           }
 
@@ -158,6 +162,91 @@ const getAnime = function(url) {
           reject(err);
         });
   });
+};
+
+/**
+ * @param {string} query
+ * @param {numpber} page
+ * @return {Promise}
+ */
+const search = function(query, page) {
+  return new Promise((resolve, reject) => {
+    axios.get(`${site}/search?search=${query}&page=${page}`)
+        .then(async (html) => {
+          const $ = cheerio.load(html.data);
+          const result = $('.anime-box');
+          const animes = [];
+
+          if (result.length) {
+            result.each((i, a) => {
+              animes.push({
+                title: $('.anime-meta > .anime-title', a).eq(0).text().trim(),
+                thumbnail: $('.thumbnail', a).attr('src'),
+                eps: $('.anime-details', a).clone().children().remove().end()
+                    .text().trim().split(' ')[0],
+                url: $('a', a).attr('href'),
+                typeAndYear: $('.anime-details > strong', a).text().trim(),
+              });
+            });
+          }
+
+          resolve(await Promise.all(animes.map(async (anime) => ({
+            title: anime.title,
+            thumbnail: anime.thumbnail,
+            eps: anime.eps,
+            url: await getSlug(anime.url, anime.title),
+            type: anime.typeAndYear.split('·')[0].trim(),
+            year: anime.typeAndYear.split('·')[1].trim(),
+          }))));
+        })
+        .catch((error) => reject(error));
+  });
+};
+
+const getFrontPageExtra = function(sectionSelector, eq, isLast) {
+  return new Promise((resolve, reject) => {
+    axios.get(site + paths.recent)
+        .then((html) => {
+          const $ = cheerio.load(html.data);
+          const extras = ((eq) ? $(sectionSelector).eq(2) :
+            (isLast) ? $(sectionSelector).last() : $(sectionSelector))
+              .find('.column')
+              .map(async (i, item) => {
+                const anime = {
+                  title: $('.anime-title', item).text().trim(),
+                  url: $('a', item).attr('href'),
+                  thumbnail: $('.image', item).css('background').trim()
+                      .split(' ')[0],
+                  rating: $('.tag', item).length ?
+                    $('.tag', item).text().trim() : null,
+                  details: $('.anime-details', item).text().trim()
+                      .replace(/\n/g, ' ').replace(/\s+/g, ' '),
+                };
+                return {
+                  ...anime,
+                  thumbnail: anime.thumbnail
+                      .substring(5, anime.thumbnail.length - 2),
+                  url: await getSlug(anime.url, `${anime.title}`),
+                };
+              }).toArray();
+
+          resolve(Promise.all(extras));
+        })
+        .catch((error) => reject(error));
+  });
+};
+
+const getTrends = function() {
+  return getFrontPageExtra('.column-item', 2);
+};
+
+const getPopulars = function() {
+  return getFrontPageExtra('section[class*="section is-dark-blue"]');
+};
+
+const getLastAdded = function() {
+  return getFrontPageExtra('.section',
+      null, true);
 };
 
 const getPlayers = function(url) {
@@ -252,4 +341,8 @@ module.exports = {
   getPlayers,
   getEpisode,
   getAnime,
+  search,
+  getTrends,
+  getPopulars,
+  getLastAdded,
 };
