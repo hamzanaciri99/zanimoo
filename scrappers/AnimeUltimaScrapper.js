@@ -1,6 +1,5 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const puppeteer = require('puppeteer');
 const {getSlug} = require('../models/slugsDao');
 const {getPage} = require('../util');
 
@@ -93,10 +92,10 @@ const getAnime = function(url) {
   return new Promise((resolve, reject) => {
     getPage()
         .then(function(page) {
-          page.setDefaultNavigationTimeout(300000);
+          page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT);
           // wait untill episodes table exists
           page.waitForSelector(
-              'table[class="table is-fullwidth is-hoverable is-narrow-mobile"]',
+              '.table tbody tr',
           );
           return page.goto(url).then(function() {
             return page.content();
@@ -107,8 +106,9 @@ const getAnime = function(url) {
           const anime = {};
 
           const animeDetails = $('.anime-details');
-          const episodesInfo = $('section').eq(1).find('.table');
+          const episodesInfo = $('.table');
 
+          anime.thumbnail = $('.thumbnail').attr('src');
           anime.name = animeDetails.find('h1[class*="title"]')
               .clone().children().remove().end().text().trim();
           [anime.year, anime.genre] = animeDetails
@@ -139,6 +139,8 @@ const getAnime = function(url) {
               airing: $('td', e).last().text().trim(),
             });
           });
+
+          console.log(anime.episodes.length);
 
           anime.episodes = anime.episodes.map(async (ep) => {
             if (!ep.url) return ep;

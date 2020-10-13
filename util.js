@@ -17,11 +17,12 @@ exports.slug = function(name) {
   return name.trim().replace(regexp1, '-').replace(regexp2, '-').toLowerCase();
 };
 
-const browser = puppeteer.launch({headless: true, args: ['--no-sandbox']});
 exports.getPage = function() {
-  return browser.then(function(browser) {
-    return browser.newPage();
-  });
+  return puppeteer
+      .launch({headless: true, args: ['--no-sandbox']})
+      .then(function(browser) {
+        return browser.newPage();
+      });
 };
 
 const connection = mysql.createConnection({
