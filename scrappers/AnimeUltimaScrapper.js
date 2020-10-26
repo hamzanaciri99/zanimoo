@@ -93,12 +93,11 @@ const getAnime = function(url) {
     getPage()
         .then(function(page) {
           page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT);
-          // wait untill episodes table exists
-          page.waitForSelector(
-              '.table tbody tr',
-          );
           return page.goto(url).then(function() {
-            return page.content();
+            // wait untill episodes table exists
+            return page.waitForSelector('.table tbody tr').then(() =>{
+              return page.content();
+            });
           });
         })
         .then(async function(html) {
@@ -113,6 +112,7 @@ const getAnime = function(url) {
               .clone().children().remove().end().text().trim();
           [anime.year, anime.genre] = animeDetails
               .find('h1[class*="title"] > span').text().split('·');
+          [anime.year, anime.genre] = [anime.year || '', anime.genre || ''];
           [anime.year, anime.genre] = [anime.year.trim(), anime.genre.trim()];
           anime.tags = animeDetails.find('.tags > .tag')
               .map((i, tag) => $(tag).text())
