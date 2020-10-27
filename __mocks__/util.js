@@ -25,12 +25,16 @@ exports.getPage = function() {
       });
 };
 
-const connection = mysql.createConnection({
+let connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: '',
   database: 'zanimoo',
 });
+
+exports.setConnection = function(c) {
+  connection = c;
+};
 
 exports.getConnection = function() {
   return connection;
